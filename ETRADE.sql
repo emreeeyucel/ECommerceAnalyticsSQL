@@ -916,3 +916,68 @@ FROM OdemeAnalizi
 ORDER BY Sehir
 
 GO
+
+
+-- Müşteri Yaşam Döngüsü Analizi (CLV)
+--Bir müşterinin platforma ilk girişinden bu yana toplam harcaması ve Ortalama müşteri yaşam değeri
+SELECT 
+    U.ID AS UserID,
+    U.USERNAME_,
+    MIN(O.DATE_) AS IlkSiparisTarihi,
+    MAX(O.DATE_) AS SonSiparisTarihi,
+    DATEDIFF(DAY, MIN(O.DATE_), MAX(O.DATE_)) AS YasamSuresiGun,
+    COUNT(DISTINCT O.ID) AS ToplamSiparisSayisi,
+    SUM(OD.TOTALPRICE) AS ToplamHarcama,
+    SUM(OD.TOTALPRICE) / NULLIF(COUNT(DISTINCT O.ID), 0) AS OrtalamaSiparisTutari
+FROM USER_ U
+JOIN ORDER_ O ON U.ID = O.USERID
+JOIN ORDERDETAIL OD ON O.ID = OD.ORDERID
+GROUP BY U.ID, U.USERNAME_
+ORDER BY ToplamHarcama DESC;
+
+GO
+
+
+--Cohort Analizi
+--Belirli bir ayda ilk siparişini veren kullanıcıların sonraki aylarda aktiflik oranı
+WITH IlkSiparis AS (
+    SELECT 
+        U.ID AS UserID,
+        MIN(FORMAT(O.DATE_, 'yyyy-MM')) AS CohortAy
+    FROM USER_ U
+    JOIN ORDER_ O ON U.ID = O.USERID
+    GROUP BY U.ID
+),
+Siparisler AS (
+    SELECT
+        U.ID AS UserID,
+        FORMAT(O.DATE_, 'yyyy-MM') AS SiparisAy
+    FROM USER_ U
+    JOIN ORDER_ O ON U.ID = O.USERID
+)
+SELECT
+    I.CohortAy,
+    S.SiparisAy,
+    COUNT(DISTINCT S.UserID) AS AktifKullaniciSayisi
+FROM IlkSiparis I
+JOIN Siparisler S ON I.UserID = S.UserID
+GROUP BY I.CohortAy, S.SiparisAy
+ORDER BY I.CohortAy, S.SiparisAy;
+GO
+
+-- Churn (Müşteri Kaybı) Analizi
+-- Son 90 gündür sipariş vermeyen ama daha önce sipariş vermiş kullanıcılar
+SELECT 
+    U.ID AS UserID,
+    U.USERNAME_,
+    MAX(O.DATE_) AS SonSiparisTarihi,
+    DATEDIFF(DAY, MAX(O.DATE_), GETDATE()) AS GecenGun
+FROM USER_ U
+JOIN ORDER_ O ON U.ID = O.USERID
+GROUP BY U.ID, U.USERNAME_
+HAVING DATEDIFF(DAY, MAX(O.DATE_), GETDATE()) > 90
+ORDER BY GecenGun DESC;
+
+
+
+
