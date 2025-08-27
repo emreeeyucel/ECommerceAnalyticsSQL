@@ -51,6 +51,3 @@ Bu proje ile amacım, SQL sorgularını gerçek bir senaryo üzerinde uygulamak,
 - **Veri Modelleme** – Tablolar arası ilişkiler ve veri bütünlüğü  
 - **Veri Analizi ve İş Zekası** – RFM, CLV, Cohort, Churn, zaman serisi ve segment bazlı analizler  
 
-
-
-#SQL #DataAnalytics #BusinessIntelligence #VeriAnalizi #İşZekası
